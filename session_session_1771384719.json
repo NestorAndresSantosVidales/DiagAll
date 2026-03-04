@@ -1,0 +1,38 @@
+{
+  "ID": "session_1771384719",
+  "Timestamp": "2026-02-17T22:18:39.3172934-05:00",
+  "Target": "google.com",
+  "Profile": "wan",
+  "Results": [
+    {
+      "Name": "DNS Resolution",
+      "Status": "PASS",
+      "Details": "Resolved to [172.217.29.14]",
+      "Metric": "14.4673ms"
+    },
+    {
+      "Name": "TCP Reachability",
+      "Status": "PASS",
+      "Details": "",
+      "Metric": "8.2972ms"
+    },
+    {
+      "Name": "TCP Trace",
+      "Status": "PASS",
+      "Details": " reached in 6 hops",
+      "Metric": "6 hops"
+    },
+    {
+      "Name": "TLS Check",
+      "Status": "PASS",
+      "Details": "Ver: 304, Cipher: 1301",
+      "Metric": "81.2199ms"
+    },
+    {
+      "Name": "Performance",
+      "Status": "SKIP",
+      "Details": "Requires server",
+      "Metric": ""
+    }
+  ]
+}

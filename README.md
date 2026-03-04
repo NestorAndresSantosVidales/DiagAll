@@ -71,6 +71,15 @@ The conception, logic structuring, and code generation for this project were hea
 
 ---
 
+## 📈 Benefits and Scope
+
+- **100% Offline Capability:** In environments with strict security policies, air-gapped networks, or total internet outages, DiagAll still provides full diagnostic and AI capabilities locally.
+- **Zero Privileges Required:** Unlike traditional tools that require `sudo` or Administrator rights for ICMP or raw sockets, DiagAll uses unprivileged techniques (like TCP Connect scanning and unprivileged tracing) to work out-of-the-box for any user.
+- **Democratized Network Engineering:** You don't need to be a CCNA/CCNP to understand the results. The AI translates complex network behavior into actionable insights.
+- **All-in-One Binary:** No need to install separate tools like `nmap`, `traceroute`, `ping`, `iperf`, and `nslookup`. DiagAll replaces them all.
+
+---
+
 ## 🚀 Upcoming Updates (Roadmap)
 
 The project is continuously evolving. Here is what is planned for the near future:
@@ -89,20 +98,182 @@ The project is continuously evolving. Here is what is planned for the near futur
 
 ---
 
-## 🛠 Quick Start
+## 🛠 Quick Start & CLI Command Reference
 
-To use DiagAll via the CLI:
+To use DiagAll via the CLI, you interact with specific subcommands.
 
+### `help`
+Prints the help menu with all available commands.
 ```bash
-# Print help menu
 diagall help
-
-# Run a port scan
-diagall scan 192.168.1.1 --ports 22,80,443
-
-# Ask the AI expert to diagnose a problem
-diagall ask "Why is my connection to github.com so slow?"
-
-# Start the Web UI
-diagall ui
 ```
+
+---
+
+### `reach`
+Tests TCP or UDP reachability to a specific target host and port.
+- **Syntax:** `diagall reach [--proto tcp|udp] [--timeout 2s] <host:port>`
+- **Combinations:**
+  - `diagall reach google.com:443` (Defaults to TCP).
+  - `diagall reach -proto udp -timeout 5s 192.168.1.1:53`
+
+> **Expected Output:**
+> ```text
+> TCP Reach google.com:443: Success, RTT=14.5ms
+> 
+> --- 🤖 Expert Analysis ---
+> The target is reachable on the specified port. Connection established successfully in 14.5ms.
+> --------------------------
+> ```
+
+---
+
+### `dns`
+Resolves a domain name to its IP addresses.
+- **Syntax:** `diagall dns <host>`
+
+> **Expected Output:**
+> ```text
+> DNS Resolve github.com:
+>         IPs: [140.82.113.3]
+>         Duration: 34.2ms
+>         Error: <nil>
+>         
+> --- 🤖 Expert Analysis ---
+> DNS resolution successful.
+> --------------------------
+> ```
+
+---
+
+### `tls`
+Performs a TLS handshake to check certificate validity and connection security.
+- **Syntax:** `diagall tls <host:port>`
+
+> **Expected Output:**
+> ```text
+> TLS Check example.com:443:
+>         Version: 304
+>         Cipher: 1301
+>         Handshake: 45.1ms
+>         Success: true
+>         Error: <nil>
+> ```
+
+---
+
+### `trace`
+Traces the route to the target over TCP (useful for bypassing ICMP blocking).
+- **Syntax:** `diagall trace <host:port>`
+
+> **Expected Output:**
+> ```text
+> Tracing route to 8.8.8.8:443 over TCP...
+> ..........
+> 1       4.2ms   192.168.1.1     Success
+> 2       12.1ms  10.0.0.1        Success
+> 3       14.5ms  8.8.8.8         Success
+> 
+> --- 🤖 Expert Analysis ---
+> Route traced successfully in 3 hops with no packet loss detected.
+> --------------------------
+> ```
+
+---
+
+### `perf`
+Measures bandwidth throughput. Can run in client or server mode for TCP or UDP.
+- **Syntax:** `diagall perf <tcp|udp> <client|server> [args]`
+- **Combinations:**
+  - **Server (Listen):** `diagall perf tcp server 9090`
+  - **Client (Test):** `diagall perf tcp client 192.168.1.50:9090`
+
+> **Expected Client Output:**
+> ```text
+> TCP Performance: 112.45 MB/s
+> ```
+
+---
+
+### `scan`
+Targeted port scanning for service discovery.
+- **Syntax:** `diagall scan <host> [--ports port1,port2...] [--timeout 500ms]`
+- **Combinations:**
+  - `diagall scan 10.0.0.5` (Scans default popular ports).
+  - `diagall scan 10.0.0.5 -ports 22,80,443,8080 -timeout 1s`
+
+> **Expected Output:**
+> ```text
+> 🔍 Scanning 4 ports on 10.0.0.5...
+>   [+] Port 22: OPEN (ssh)
+>       Banner: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5
+>   [+] Port 80: OPEN (http)
+> Scan complete. Found 2 open ports.
+> ```
+
+---
+
+### `netscan`
+Discovers active hosts on a local subnet and checks specific ports.
+- **Syntax:** `diagall netscan <cidr> [--ports port1,port2...] [--timeout 300ms]`
+- **Combinations:**
+  - `diagall netscan 192.168.1.0/24 -ports 22,3389`
+
+> **Expected Output:**
+> ```text
+> 🌐 Starting network discovery on 192.168.1.0/24...
+> 
+> [+] Host Found: 192.168.1.10
+>     - Port 22: OPEN (ssh)
+> 
+> [+] Host Found: 192.168.1.15
+>     - Port 3389: OPEN (rdp)
+> 
+> Discovery complete. Found 2 active hosts.
+> ```
+
+---
+
+### `profile`
+Runs predefined automated troubleshooting profiles and generates an HTML report.
+- **Syntax:** `diagall profile <profile_name> <target>`
+- **Combinations:**
+  - `diagall profile wan google.com`
+
+> **Expected Output:**
+> *Executes a batch of Reach, DNS, and Trace commands and outputs an HTML file (e.g., `report_session_1771384719.html`) in the current directory.*
+
+---
+
+### `ask`
+Directly engages the embedded Mistral AI Expert to perform guided investigations.
+- **Syntax:** `diagall ask "<question or scenario>"`
+- **Combinations:**
+  - `diagall ask "Why can't I reach 8.8.8.8?"`
+
+> **Expected Output:**
+> ```text
+> 🤖 AI Expert is initiating a guided investigation for: Why can't I reach 8.8.8.8?
+> -------------------------------------------
+> I will start by tracing the route to 8.8.8.8 on port 443 to identify where the connection is dropping...
+> 
+> 🚀 AI requested execution: trace 8.8.8.8
+> Tracing... Done.
+> 📊 Result: Trace 8.8.8.8: 15 hops reached
+> 
+> 🤔 Final AI Interpretation:
+> -------------------------------------------
+> The trace completed 15 hops but failed to reach the final destination. This indicates a routing loop or a strict firewall drop deep in the ISP's network infrastructure.
+> ```
+
+---
+
+### `ui`
+Starts the local web server to access the GUI.
+- **Syntax:** `diagall ui`
+
+> **Expected Output:**
+> ```text
+> Please open http://localhost:8080 in your browser
+> Server started on :8080
+> ```

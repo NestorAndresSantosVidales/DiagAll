@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiagAll — Network Diagnostics</title>
+    <meta name="description"
+        content="DiagAll: Offline network diagnostics with embedded AI — MTR, iPerf, path trace, and intelligent analysis.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════════════════════ HEADER / TARGET BAR -->
+    <header class="topbar" id="topbar">
+        <div class="brand">
+            <div class="brand-icon">⬡</div>
+            <span class="brand-name">DiagAll</span>
+            <span class="brand-badge">v2</span>
+        </div>
+
+        <div class="target-bar" id="globalTargetBar">
+            <div class="target-field target-host-wrap">
+                <label>Target Host</label>
+                <input type="text" id="targetHost" placeholder="e.g. 8.8.8.8 or example.com" value="8.8.8.8"
+                    autocomplete="off">
+                <div class="field-hint" id="hostHint"></div>
+            </div>
+            <div class="target-field target-port-wrap">
+                <label>Port</label>
+                <input type="number" id="targetPort" placeholder="443" value="443" min="1" max="65535">
+                <div class="field-hint" id="portHint"></div>
+            </div>
+            <div class="target-field">
+                <label>Protocol</label>
+                <select id="targetProto">
+                    <option value="tcp">TCP</option>
+                    <option value="udp">UDP</option>
+                </select>
+            </div>
+            <div class="target-field target-sni-wrap">
+                <label>SNI (optional)</label>
+                <input type="text" id="targetSNI" placeholder="TLS server name">
+            </div>
+            <div class="target-actions">
+                <button class="btn btn-primary" id="btnStart" onclick="startCurrentTab()">▶ Start</button>
+                <button class="btn btn-danger" id="btnStop" onclick="stopAll()" style="display:none">■ Stop</button>
+                <button class="btn btn-ghost" onclick="saveAsProfile()">☆ Save</button>
+            </div>
+        </div>
+
+        <div class="conn-badge" id="connStatus">
+            <span class="conn-dot"></span>
+            <span class="conn-text">Offline</span>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════ MAIN LAYOUT -->
+    <div class="app-layout">
+
+        <!-- SIDEBAR -->
+        <nav class="sidebar" id="sidebar">
+            <button class="nav-item active" id="nav-quick" onclick="showTab('quick',   this)" title="Quick Check">
+                <span class="nav-icon">⚡</span><span class="nav-label">Quick Check</span>
+            </button>
+            <button class="nav-item" id="nav-reach" onclick="showTab('reach',   this)" title="Reachability">
+                <span class="nav-icon">📡</span><span class="nav-label">Reachability</span>
+            </button>
+            <button class="nav-item" id="nav-path" onclick="showTab('path',    this)" title="Path / MTR">
+                <span class="nav-icon">🗺</span><span class="nav-label">Path / MTR</span>
+            </button>
+            <button class="nav-item" id="nav-perf" onclick="showTab('perf',    this)" title="Performance">
+                <span class="nav-icon">📊</span><span class="nav-label">Performance</span>
+            </button>
+            <button class="nav-item" id="nav-profiles" onclick="showTab('profiles',this)" title="Profiles">
+                <span class="nav-icon">🗂</span><span class="nav-label">Profiles</span>
+            </button>
+            <button class="nav-item" id="nav-reports" onclick="showTab('reports', this)" title="Reports">
+                <span class="nav-icon">📄</span><span class="nav-label">Reports</span>
+            </button>
+            <button class="nav-item" id="nav-ai-expert" onclick="showTab('ai-expert', this)" title="AI Expert">
+                <span class="nav-icon">🧠</span><span class="nav-label">AI Expert</span>
+            </button>
+            <div class="sidebar-spacer"></div>
+            <button class="nav-item" id="nav-settings" onclick="showTab('settings',this)" title="Settings">
+                <span class="nav-icon">⚙</span><span class="nav-label">Settings</span>
+            </button>
+        </nav>
+
+        <!-- CONTENT AREA -->
+        <main class="content" id="contentArea">
+
+            <!-- ─────────────────────────────────────── QUICK CHECK -->
+            <section class="tab-pane active" id="tab-quick">
+                <div class="page-header">
+                    <h1>Quick Check <span class="page-sub">Helpdesk diagnostic</span></h1>
+                    <button class="btn btn-primary btn-lg" id="btnQuickRun" onclick="runQuickCheck()">⚡ Run Quick
+                        Check</button>
+                </div>
+
+                <div class="status-cards" id="quickCards">
+                    <div class="status-card" id="card-dns">
+                        <div class="card-icon">🔍</div>
+                        <div class="card-body">
+                            <div class="card-title">DNS Resolution</div>
+                            <div class="card-value pending">—</div>
+                            <div class="card-detail"></div>
+                        </div>
+                        <div class="card-badge pending">Pending</div>
+                    </div>
+                    <div class="status-card" id="card-tcp">
+                        <div class="card-icon">🔗</div>
+                        <div class="card-body">
+                            <div class="card-title">TCP Connect</div>
+                            <div class="card-value pending">—</div>
+                            <div class="card-detail"></div>
+                        </div>
+                        <div class="card-badge pending">Pending</div>
+                    </div>
+                    <div class="status-card" id="card-tls">
+                        <div class="card-icon">🔒</div>
+                        <div class="card-body">
+                            <div class="card-title">TLS Handshake</div>
+                            <div class="card-value pending">—</div>
+                            <div class="card-detail"></div>
+                        </div>
+                        <div class="card-badge pending">Pending</div>
+                    </div>
+                </div>
+
+                <!-- AI Findings Panel -->
+                <div class="findings-panel" id="findingsPanel" style="display:none">
+                    <div class="findings-header">
+                        <span class="findings-title">🤖 AI Analysis</span>
+                        <span class="findings-badge" id="findingsBadge">0 findings</span>
+                    </div>
+                    <div class="findings-summary" id="findingsSummary"></div>
+                    <div class="findings-list" id="findingsList"></div>
+                    <div class="findings-steps" id="findingsSteps" style="display:none">
+                        <div class="steps-title">📋 Recommended Next Steps</div>
+                        <ol id="nextStepsList"></ol>
+                    </div>
+                    <div class="ai-disclaimer">This analysis is generated automatically by the offline AI engine. It
+                        does not replace expert validation.</div>
+                </div>
+
+                <div class="console" id="console-quick"></div>
+            </section>
+
+            <!-- ─────────────────────────────────────── REACHABILITY -->
+            <section class="tab-pane" id="tab-reach">
+                <div class="page-header">
+                    <h1>Reachability <span class="page-sub">TCP/UDP probes over time</span></h1>
+                </div>
+
+                <div class="controls-row">
+                    <div class="ctrl-group">
+                        <label>Attempts</label>
+                        <input type="number" id="reachAttempts" value="60" min="1" max="1000" style="width:80px">
+                    </div>
+                    <div class="ctrl-group">
+                        <label>Timeout (ms)</label>
+                        <input type="number" id="reachTimeout" value="2000" min="100" max="30000" style="width:90px">
+                    </div>
+                    <div class="ctrl-group">
+                        <label>Interval (ms)</label>
+                        <input type="number" id="reachInterval" value="1000" min="100" max="60000" style="width:90px">
+                    </div>
+                    <button class="btn btn-primary" onclick="runReach()">▶ Start Probing</button>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title">RTT Timeline (ms)</div>
+                    <canvas id="chart-reach-rtt" height="200"></canvas>
+                </div>
+
+                <div class="stats-row" id="reach-stats">
+                    <div class="stat-chip"><span class="stat-label">Sent</span><span class="stat-val"
+                            id="reach-sent">0</span></div>
+                    <div class="stat-chip"><span class="stat-label">Success</span><span class="stat-val green"
+                            id="reach-ok">0</span></div>
+                    <div class="stat-chip"><span class="stat-label">Failed</span><span class="stat-val red"
+                            id="reach-fail">0</span></div>
+                    <div class="stat-chip"><span class="stat-label">Loss</span><span class="stat-val amber"
+                            id="reach-loss">0%</span></div>
+                    <div class="stat-chip"><span class="stat-label">Avg RTT</span><span class="stat-val"
+                            id="reach-avg">—</span></div>
+                    <div class="stat-chip"><span class="stat-label">Min RTT</span><span class="stat-val"
+                            id="reach-min">—</span></div>
+                    <div class="stat-chip"><span class="stat-label">Max RTT</span><span class="stat-val"
+                            id="reach-max">—</span></div>
+                </div>
+
+                <div class="table-card">
+                    <table class="data-table" id="reach-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Status</th>
+                                <th>RTT (ms)</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reach-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ─────────────────────────────────────── PATH / MTR -->
+            <section class="tab-pane" id="tab-path">
+                <div class="page-header">
+                    <h1>Path / MTR <span class="page-sub">Live hop-by-hop trace</span></h1>
+                </div>
+
+                <div class="controls-row">
+                    <div class="ctrl-group">
+                        <label>Max Hops</label>
+                        <input type="number" id="mtrMaxHops" value="30" min="1" max="64" style="width:70px">
+                    </div>
+                    <div class="ctrl-group">
+                        <label>Timeout (ms)</label>
+                        <input type="number" id="mtrTimeout" value="1000" min="100" max="10000" style="width:90px">
+                    </div>
+                    <div class="ctrl-group">
+                        <label>Mode</label>
+                        <select id="mtrMode">
+                            <option value="once">One-shot</option>
+                            <option value="continuous">Continuous (MTR)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="runMTR()">▶ Start Trace</button>
+                </div>
+
+                <div class="table-card">
+                    <table class="data-table mtr-table" id="mtr-table">
+                        <thead>
+                            <tr>
+                                <th>Hop</th>
+                                <th>Host</th>
+                                <th>Loss%</th>
+                                <th>Sent</th>
+                                <th>Last</th>
+                                <th>Avg</th>
+                                <th>Best</th>
+                                <th>Worst</th>
+                                <th>P95</th>
+                                <th>Jitter</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mtr-body"></tbody>
+                    </table>
+                </div>
+
+                <div class="findings-panel" id="mtrFindingsPanel" style="display:none">
+                    <div class="findings-header"><span class="findings-title">🤖 Path Analysis</span></div>
+                    <div class="findings-list" id="mtrFindingsList"></div>
+                </div>
+            </section>
+
+            <!-- ─────────────────────────────────────── PERFORMANCE -->
+            <section class="tab-pane" id="tab-perf">
+                <div class="page-header">
+                    <h1>Performance <span class="page-sub">iPerf/nuttcp-style throughput test</span></h1>
+                </div>
+
+                <div class="mode-toggle">
+                    <button class="mode-btn active" id="perfModeClient"
+                        onclick="setPerfMode('client', this)">Client</button>
+                    <button class="mode-btn" id="perfModeServer" onclick="setPerfMode('server', this)">Server</button>
+                </div>
+
+                <!-- Client mode -->
+                <div id="perfClientPanel">
+                    <div class="controls-row">
+                        <div class="ctrl-group">
+                            <label>Duration (s)</label>
+                            <input type="number" id="perfDuration" value="10" min="1" max="3600" style="width:70px">
+                        </div>
+                        <div class="ctrl-group">
+                            <label>Streams</label>
+                            <input type="number" id="perfStreams" value="1" min="1" max="8" style="width:60px">
+                        </div>
+                        <div class="ctrl-group">
+                            <label>Warmup (s)</label>
+                            <input type="number" id="perfWarmup" value="2" min="0" max="30" style="width:60px">
+                        </div>
+                        <div class="ctrl-group">
+                            <label>Direction</label>
+                            <select id="perfDir">
+                                <option value="upload">Upload</option>
+                                <option value="download">Download (reverse)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="runPerf()">▶ Start Test</button>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">Throughput (Mbps) — 1s intervals</div>
+                        <canvas id="chart-perf-mbps" height="220"></canvas>
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat-chip"><span class="stat-label">Current</span><span class="stat-val"
+                                id="perf-cur">— Mbps</span></div>
+                        <div class="stat-chip"><span class="stat-label">Average</span><span class="stat-val"
+                                id="perf-avg">— Mbps</span></div>
+                        <div class="stat-chip"><span class="stat-label">Peak</span><span class="stat-val green"
+                                id="perf-max">— Mbps</span></div>
+                        <div class="stat-chip"><span class="stat-label">Min</span><span class="stat-val red"
+                                id="perf-min">— Mbps</span></div>
+                    </div>
+                </div>
+
+                <!-- Server mode -->
+                <div id="perfServerPanel" style="display:none">
+                    <div class="controls-row">
+                        <div class="ctrl-group">
+                            <label>Listen Port</label>
+                            <input type="number" id="serverPort" value="5201" min="1" max="65535" style="width:90px">
+                        </div>
+                        <button class="btn btn-primary" onclick="startServer()">▶ Start Server</button>
+                    </div>
+                    <div class="console" id="console-server"></div>
+                </div>
+
+                <div class="findings-panel" id="perfFindingsPanel" style="display:none">
+                    <div class="findings-header"><span class="findings-title">🤖 Performance Analysis</span></div>
+                    <div class="findings-list" id="perfFindingsList"></div>
+                </div>
+
+                <div class="console" id="console-perf"></div>
+            </section>
+
+            <!-- ─────────────────────────────────────── PROFILES -->
+            <section class="tab-pane" id="tab-profiles">
+                <div class="page-header">
+                    <h1>Profiles <span class="page-sub">WAN / VPN diagnostic suites</span></h1>
+                </div>
+
+                <div class="profile-grid">
+                    <div class="profile-card" onclick="runProfile('wan')">
+                        <div class="profile-icon">🌐</div>
+                        <div class="profile-name">WAN Profile</div>
+                        <div class="profile-desc">DNS → TCP reach → TLS check → Path trace</div>
+                        <button class="btn btn-primary" style="margin-top:12px">▶ Run WAN</button>
+                    </div>
+                    <div class="profile-card" onclick="runProfile('vpn')">
+                        <div class="profile-icon">🔐</div>
+                        <div class="profile-name">VPN Profile</div>
+                        <div class="profile-desc">Internal DNS → TCP reach → Path trace inside tunnel</div>
+                        <button class="btn btn-primary" style="margin-top:12px">▶ Run VPN</button>
+                    </div>
+                    <div class="profile-card profile-custom">
+                        <div class="profile-icon">🧩</div>
+                        <div class="profile-name">Custom</div>
+                        <div class="profile-desc">Build a custom diagnostic sequence</div>
+                        <button class="btn btn-ghost" style="margin-top:12px" onclick="showCustomBuilder()">Configure
+                            →</button>
+                    </div>
+                </div>
+
+                <!-- Profile progress -->
+                <div id="profileProgress" style="display:none;margin-top:24px">
+                    <div class="progress-header">
+                        <span id="profileProgressLabel">Running...</span>
+                        <div class="progress-bar-wrap">
+                            <div class="progress-bar" id="profileProgressBar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="console" id="console-profiles" style="margin-top:16px"></div>
+            </section>
+
+            <!-- ─────────────────────────────────────── REPORTS -->
+            <section class="tab-pane" id="tab-reports">
+                <div class="page-header">
+                    <h1>Reports &amp; History <span class="page-sub">Session archive</span></h1>
+                    <button class="btn btn-ghost" onclick="refreshReports()">↻ Refresh</button>
+                </div>
+
+                <div id="session-list-wrap">
+                    <div id="session-list-empty" style="color:var(--text-muted);padding:24px;text-align:center">
+                        No sessions found. Run a diagnostic to create one.
+                    </div>
+                    <div id="session-list"></div>
+                </div>
+            </section>
+
+            <!-- ─────────────────────────────────────── AI EXPERT (NEW) -->
+            <section class="tab-pane" id="tab-ai-expert">
+                <div class="page-header">
+                    <h1>AI Expert <span class="page-sub">Local training & deep analysis</span></h1>
+                    <div class="header-badges">
+                        <span class="badge badge-success">Offline Ready</span>
+                        <span class="badge badge-info">Embedded Expert</span>
+                    </div>
+                </div>
+
+                <div class="expert-container">
+                    <!-- Knowledge Ingestion (Training) -->
+                    <div class="expert-card">
+                        <div class="card-header">
+                            <span class="card-icon">📚</span>
+                            <div class="card-title-wrap">
+                                <div class="card-title">Local Knowledge Ingestion</div>
+                                <div class="card-desc">"Train" the expert by providing network documentation or past
+                                    cases.</div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <textarea id="aiKnowledgeInput"
+                                placeholder="Paste networking guides, firewall rules, or known issues here to 'train' the local model..."
+                                rows="8"></textarea>
+                            <div class="btn-row">
+                                <button class="btn btn-primary" onclick="ingestKnowledge()">🧠 Ingest Knowledge</button>
+                                <span class="input-hint">Content is stored locally and used as context for
+                                    analysis.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Direct Interaction -->
+                    <div class="expert-card" style="margin-top:24px">
+                        <div class="card-header">
+                            <span class="card-icon">💬</span>
+                            <div class="card-title-wrap">
+                                <div class="card-title">Expert Consultation</div>
+                                <div class="card-desc">Ask the networking expert about a specific result or scenario.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chat-console" id="aiChatConsole">
+                                <div class="chat-msg system">Expert is ready. Ingested knowledge will be prioritized.
+                                </div>
+                            </div>
+                            <div class="chat-input-row">
+                                <input type="text" id="aiChatInput"
+                                    placeholder="Ask about MTU issues, BGP convergence, or your latest test..."
+                                    onkeypress="if(event.key==='Enter') consultExpert()">
+                                <button class="btn btn-primary" onclick="consultExpert()">Send</button>
+                                <button class="btn btn-accent" onclick="startAIGuide()"
+                                    title="AI will automatically run tests based on your query">🤖 Guided
+                                    Investigation</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ─────────────────────────────────────── SETTINGS -->
+            <section class="tab-pane" id="tab-settings">
+                <div class="page-header">
+                    <h1>Settings <span class="page-sub">Safety limits &amp; preferences</span></h1>
+                    <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="settings-section">
+                        <h2 class="settings-heading">Safety Limits</h2>
+                        <div class="setting-row">
+                            <label>Max UDP Rate (Mbps)</label>
+                            <input type="number" id="set-maxUDP" value="100" min="1" max="10000">
+                        </div>
+                        <div class="setting-row">
+                            <label>Max Parallel Streams</label>
+                            <input type="number" id="set-maxStreams" value="8" min="1" max="64">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h2 class="settings-heading">Defaults</h2>
+                        <div class="setting-row">
+                            <label>Default Timeout (ms)</label>
+                            <input type="number" id="set-timeout" value="2000" min="100" max="30000">
+                        </div>
+                        <div class="setting-row">
+                            <label>Default Attempts</label>
+                            <input type="number" id="set-attempts" value="10" min="1" max="1000">
+                        </div>
+                        <div class="setting-row">
+                            <label>Storage Path</label>
+                            <input type="text" id="set-storage" value="." style="flex:1">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h2 class="settings-heading">Privacy &amp; AI</h2>
+                        <div class="setting-row">
+                            <label>Privacy Mode (mask IPs in exports)</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="set-privacy">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-row">
+                            <label>Offline AI Analysis</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="set-ai" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="charts.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

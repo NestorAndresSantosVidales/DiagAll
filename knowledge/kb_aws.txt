@@ -1,0 +1,26 @@
+# AWS Networking Knowledge Base
+## Common Issues and Troubleshooting
+
+1. **Security Groups & NACLs**:
+   - Issue: Instance unreachable despite Security Group allowing traffic.
+   - Expert Tip: Check Network ACLs (NACLs). Security Groups are stateful; NACLs are stateless. Return traffic must be explicitly allowed in NACLs.
+
+2. **Routing**:
+   - Issue: No internet access from Public Subnet.
+   - Expert Tip: Verify Route Table has a default route (0.0.0.0/0) pointing to an Internet Gateway (IGW). Ensure the instance has a Public IP or Elastic IP.
+
+3. **NAT Gateway**:
+   - Issue: Private subnet instances cannot reach the internet.
+   - Expert Tip: Ensure Route Table points 0.0.0.0/0 to a NAT Gateway in a Public Subnet. Check NAT Gateway metrics for bandwidth or port exhaustion.
+
+4. **MTU (Maximum Transmission Unit)**:
+   - Issue: Intermittent connectivity or large packets dropped.
+   - Expert Tip: AWS VPC supports MTU up to 9001 (Jumbo Frames) for internal traffic, but traffic over IGW/VPN/Direct Connect is limited to 1500. Mismatched MTU can cause "Path MTU Discovery" failures.
+
+5. **VPC Peering**:
+   - Issue: Subnets in Peered VPCs cannot communicate.
+   - Expert Tip: Verify routes are added in BOTH VPC route tables. Remember VPC Peering is NOT transitive.
+
+6. **Direct Connect**:
+   - Issue: BGP session down or flapping.
+   - Expert Tip: Check VLAN tagging and LOA-CFA. Verify BGP ASN and MD5 authentication match on both ends.

@@ -1,0 +1,7 @@
+Expert Knowledge: Throughput and MTU
+- Symptom: Good throughput on small tests, but stall on large transfers.
+- Analysis: Strongly suggests an MTU/MSS mismatch or PMTUD (Path MTU Discovery) failure due to ICMP "Destination Unreachable" being blocked.
+- Fix: Try lowering the MSS manually or verify link MTU on all interfaces.
+- Symptom: Single stream throughput is low, but multiple parallel streams are high.
+- Analysis: Indicates TCP window scaling is disabled or the Bandwidth Delay Product (BDP) is high and not being handled by the OS buffers.
+- Note: High UDP loss with zero TCP loss usually indicates QoS traffic shaping by the provider.

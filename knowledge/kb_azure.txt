@@ -1,0 +1,26 @@
+# Azure Networking Knowledge Base
+## Common Issues and Troubleshooting
+
+1. **Network Security Groups (NSGs)**:
+   - Issue: Applied rule is not working as expected.
+   - Expert Tip: NSG rules are processed by priority. Lower numbers have higher priority. Check for broad "DenyAll" rules with high priority. Check both Subnet-level and NIC-level NSGs.
+
+2. **VNet Peering**:
+   - Issue: Communication failure between VNets.
+   - Expert Tip: Ensure "Allow forwarded traffic" and "Allow gateway transit" are enabled if using centralized firewalls/gateways. Check for overlapping IP address spaces.
+
+3. **User Defined Routes (UDRs)**:
+   - Issue: Traffic not reaching a Virtual Appliance/Firewall.
+   - Expert Tip: Check if Nexthop is set correctly to "Virtual Appliance". Ensure IP Forwarding is enabled on the target NVA's Network Interface.
+
+4. **Load Balancer Health Probes**:
+   - Issue: Backend pool instances marked as unhealthy.
+   - Expert Tip: Ensure the application is listening on the probe port. Verify NSG allows traffic from the "AzureLoadBalancer" service tag.
+
+5. **VPN / ExpressRoute**:
+   - Issue: Intermittent drops in hybrid connectivity.
+   - Expert Tip: Check for ARP issues on ExpressRoute. Use Azure Network Watcher "Connection Troubleshoot" to identify if failures occur at the Microsoft Edge or Customer Edge.
+
+6. **DNS Resolution**:
+   - Issue: Private Link or Private DNS Zone not resolving.
+   - Expert Tip: Ensure the VNet is linked to the Private DNS Zone. Verify that "Auto-registration" is enabled if dynamic updates are needed.

@@ -1,0 +1,26 @@
+# GCP Networking Knowledge Base
+## Common Issues and Troubleshooting
+
+1. **Firewall Rules**:
+   - Issue: Traffic blocked despite "Allow" rule.
+   - Expert Tip: GCP Firewalls use priority (default 1000). Check for higher priority Deny rules. Verify tags (Target Tags vs Service Accounts) match correctly on the instances.
+
+2. **VPC Peering & Transitivity**:
+   - Issue: Hub-and-Spoke connectivity failing for spokes.
+   - Expert Tip: VPC Peering in GCP is not transitive. Use a Cloud Router with BGP or a VPN/Interconnect to achieve transitivity across multiple peers.
+
+3. **Shared VPC**:
+   - Issue: Service project cannot use Host Project subnets.
+   - Expert Tip: Ensure the Shared VPC Admin has granted "Network User" role to the service project's service identity.
+
+4. **Cloud Load Balancing**:
+   - Issue: HTTP(S) Load Balancer returning 502/503.
+   - Expert Tip: Check Heath Check ranges (35.191.0.0/16 and 130.211.0.0/22). GCP Load Balancer proxies must be able to reach backend ports.
+
+5. **MTU Limitations**:
+   - Issue: Packets dropped over VPN or Interconnect.
+   - Expert Tip: Standard GCP VPC MTU is 1460 bytes. If using VPN, ensure client MTU is set to 1390-1440 to avoid fragmentation issues.
+
+6. **Cloud DNS**:
+   - Issue: Internal hostnames not resolving across peered VPCs.
+   - Expert Tip: Check DNS peering or use Cloud DNS forwarding zones. Ensure the Visibility of the Private Zone includes all required VNets.

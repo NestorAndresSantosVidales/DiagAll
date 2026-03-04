@@ -1,0 +1,26 @@
+# OCI Networking Knowledge Base
+## Common Issues and Troubleshooting
+
+1. **Security Lists vs NSGs**:
+   - Issue: Rule added to Security List but traffic still blocked.
+   - Expert Tip: OCI allows both Security Lists (Subnet level) and Network Security Groups (vNIC level). Traffic must be allowed in BOTH to pass.
+
+2. **Dynamic Routing Gateway (DRG)**:
+   - Issue: Traffic from On-premises not reaching VCN subnets.
+   - Expert Tip: Since DRG V2, you must check DRG Route Tables and VCN Attachments. Ensure the VCN Route Table has a route for on-prem CIDR pointing to the DRG.
+
+3. **VCN Peering (LPG)**:
+   - Issue: Local VCN Peering failing.
+   - Expert Tip: Check the Local Peering Gateway (LPG) state. Both VCNs must have route entries pointing to the LPG for each other's Address CIDR.
+
+4. **FastConnect**:
+   - Issue: Virtual Circuit is UP but no traffic.
+   - Expert Tip: Verify BGP status. Check if OCI advertises VCN CIDRs and if Customer Edge advertises On-prem CIDRs. Check for MTU mismatches (1500 vs 9000).
+
+5. **Public vs Private IP Resolution**:
+   - Issue: Cannot reach Public IP from within the VCN.
+   - Expert Tip: Check the VCN NAT Gateway if trying to reach the internet. Ensure "Skip Source/Destination Check" is disabled on NVA vNICs if routing traffic through them.
+
+6. **Network Path Analyzer**:
+   - Issue: Troubleshooting complex routes.
+   - Expert Tip: Use OCI Network Path Analyzer to perform a hop-by-hop analysis of the control plane to see why a packet is being dropped (e.g., Routing table miss, Security Rule drop).

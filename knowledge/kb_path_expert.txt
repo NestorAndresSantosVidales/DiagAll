@@ -1,0 +1,7 @@
+Expert Knowledge: Path and Packet Loss
+- Pattern: Loss only at the final hop.
+- Analysis: Indicates the target host is rate-limiting ICMP or busy, but the path itself is clean.
+- Pattern: Loss starting at an intermediate hop and persisting to the target.
+- Analysis: Persistent congestion or a faulty link between the first hop showing loss and its predecessor.
+- Pattern: Latency spikes without loss.
+- Analysis: Suggests bufferbloat or asymmetric routing where the return path has different characteristics.

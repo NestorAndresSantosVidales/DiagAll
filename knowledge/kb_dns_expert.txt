@@ -1,0 +1,5 @@
+Expert Knowledge: DNS Troubleshooting
+- Symptom: Recursive queries failing but iterative works.
+- Analysis: Check for misconfigured upstream forwarders or root hints. Verify UDP/53 is not rate-limited by ISP.
+- Fix: Flush local cache (ipconfig /flushdns) and verify if the issue persists across different DNS resolvers (8.8.8.8 vs 1.1.1.1).
+- Note: Slow DNS resolution ( > 500ms ) usually indicates a geo-routing issue or overloaded resolver.
